@@ -1,15 +1,26 @@
 const express = require('express')
+const auth = require('./auth')
 
 module.exports = function(server){
 
-    //API routes
+    //Rotas Abertas
+    const openAPI = express.Router()
+    server.use('/oapi', openAPI)
 
-    const router = express.Router()
-    server.use('/api', router) //Com o router chamado aqui, os metodos abaixo só funcionaram se conter o /api
+    const AuthService = require('../api/user/authService')
+    openAPI.post('/login', AuthService.login)
+    openAPI.post('/signup', AuthService.signup)
+    openAPI.post('/validateToken', AuthService.validateToken)
+
+    //API routes
+    const apiProtegida = express.Router()
+    server.use('/api', apiProtegida) //Com o router chamado aqui, os metodos abaixo só funcionaram se conter o /api
+
+    apiProtegida.use(auth)
 
     const billingCycleService = require('../api/billingCycle/billingCycleService')
-    billingCycleService.register(router, '/billingCycles')
+    billingCycleService.register(apiProtegida, '/billingCycles')
 
     const billingSummaryService = require('../api/billingSummary/billingSummaryService')
-    router.route('/billingSumary').get(billingSummaryService.getSummary)
+    apiProtegida.route('/billingSumary').get(billingSummaryService.getSummary)
 }
